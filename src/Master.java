@@ -5,8 +5,8 @@ import java.util.List;
 
 public class Master {
     public static final int BUFFER_SIZE = 10;
-    private static final List<Integer> receivedNums = new ArrayList<>();
     public static final String BROADCAST_ADDRESS = "192.168.1.255";
+    private static final List<Integer> receivedNums = new ArrayList<>();
 
     public Master(DatagramSocket socket, int startNumber) {
         receivedNums.add(startNumber);
@@ -22,10 +22,12 @@ public class Master {
                         double average = receivedNums.stream()
                                 .filter(n -> n != 0).mapToInt(Integer::intValue).average().orElse(0.0);
                         System.out.println(average);
-                        sendToLan(socket, (int)average); //TODO: Should we send int or double
+                        broadcastToLan(socket, (int)average); //TODO: Should we send int or double
                         break;
                     case -1:
-                        System.out.println("Got -1!");
+                        System.out.println(recvNum);
+                        broadcastToLan(socket, recvNum);
+                        socket.close();
                         return;
                     default:
                         receivedNums.add(recvNum);
@@ -38,7 +40,7 @@ public class Master {
         }
     }
 
-    private static <T> void sendToLan(DatagramSocket socket, T value) {
+    private static <T> void broadcastToLan(DatagramSocket socket, T value) {
         try {
             socket.setBroadcast(true);
             byte[] bytes = String.valueOf(value).getBytes();

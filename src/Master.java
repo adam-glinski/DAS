@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
 public class Master {
@@ -8,7 +9,27 @@ public class Master {
     public static final String BROADCAST_ADDRESS = "192.168.1.255";
     private static final List<Integer> receivedNums = new ArrayList<>();
 
-    public Master(DatagramSocket socket, int startNumber) {
+    static void getBroadcastingAddress() {
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface networkInterface = interfaces.nextElement();
+                if (networkInterface.isLoopback() || !networkInterface.isUp()) {
+                    continue;
+                }
+                networkInterface.getInterfaceAddresses().stream()
+                        .filter(interfaceAddress -> interfaceAddress.getBroadcast() != null) // Ensure it has a broadcast address
+                        .forEach(interfaceAddress -> {
+                            InetAddress broadcast = interfaceAddress.getBroadcast();
+                            System.out.println("Broadcast Address: " + broadcast.getHostAddress());
+                        });
+            }
+        } catch (SocketException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public static void work(DatagramSocket socket, int startNumber) {
         receivedNums.add(startNumber);
         while(true) {
             try {
@@ -21,8 +42,7 @@ public class Master {
                     case 0://TODO: Co w przypadku gdy lista jeste pusta?
                         double average = receivedNums.stream()
                                 .filter(n -> n != 0).mapToInt(Integer::intValue).average().orElse(0.0);
-                        System.out.println(average);
-                        broadcastToLan(socket, (int)average); //TODO: Should we send int or double
+                        broadcastToLan(socket, (int)average);
                         break;
                     case -1:
                         System.out.println(recvNum);
@@ -35,7 +55,7 @@ public class Master {
                         break;
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println(e.getMessage());
             }
         }
     }
@@ -50,10 +70,10 @@ public class Master {
             socket.setBroadcast(false);
         } catch (SocketException e) {
             System.err.println("Failed to set broadcast mode!");
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         } catch (UnknownHostException e) {
             System.err.println("Failed to find the subnet!");
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         } catch (IOException e) {
             System.err.println("Failed to send broadcast packet");
         }

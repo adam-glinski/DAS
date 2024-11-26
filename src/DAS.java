@@ -1,6 +1,4 @@
-import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Socket;
 import java.net.SocketException;
 
 public class DAS {
@@ -9,20 +7,21 @@ public class DAS {
             System.err.println("missing params! usage: java DAS <port> <number>.");
             return;
         }
-        int port = -1;
-        int number = -1;
+        int port;
+        int number;
 
         try {
             port = Integer.parseInt(args[0]);
             number = Integer.parseInt(args[1]);
         } catch (NumberFormatException e) {
             System.err.println("At least one of the params isn't a number.");
+            return;
         }
 
         try(DatagramSocket socket = new DatagramSocket(port)) {
-            new Master(socket, number);
+            Master.work(socket, number);
         } catch(SocketException e) {
-            new Slave(port, number);
+            Slave.work(port, number);
         }
     }
 }

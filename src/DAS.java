@@ -4,12 +4,11 @@ import java.net.SocketException;
 public class DAS {
     public static void main(String[] args) {
         if(args.length != 2) {
-            System.err.println("missing params! usage: java DAS <port> <number>.");
+            System.err.println("missing params! usage: java DAS <port> <number>");
             return;
         }
         int port;
         int number;
-
         try {
             port = Integer.parseInt(args[0]);
             number = Integer.parseInt(args[1]);

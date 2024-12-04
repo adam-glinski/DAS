@@ -6,21 +6,22 @@ import java.util.List;
 
 public class Master {
     public static final int BUFFER_SIZE = 10;
-    public static final String BROADCAST_ADDRESS = "192.168.1.255";
+    public static String broadcastAddress;
     private static final List<Integer> receivedNums = new ArrayList<>();
 
-    static void getBroadcastingAddress() {
+    static public void setBroadcastingAddress() {
         try {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
             while (interfaces.hasMoreElements()) {
                 NetworkInterface networkInterface = interfaces.nextElement();
-                if (networkInterface.isLoopback() || !networkInterface.isUp()) {
+                if (networkInterface.isLoopback() || !networkInterface.isUp() || networkInterface.isVirtual()) {
                     continue;
                 }
                 networkInterface.getInterfaceAddresses().stream()
                         .filter(interfaceAddress -> interfaceAddress.getBroadcast() != null) // Ensure it has a broadcast address
                         .forEach(interfaceAddress -> {
                             InetAddress broadcast = interfaceAddress.getBroadcast();
+                            broadcastAddress = broadcast.getHostAddress();
                             System.out.println("Broadcast Address: " + broadcast.getHostAddress());
                         });
             }
@@ -30,6 +31,7 @@ public class Master {
     }
 
     public static void work(DatagramSocket socket, int startNumber) {
+        setBroadcastingAddress();
         receivedNums.add(startNumber);
         while(true) {
             try {
@@ -65,7 +67,7 @@ public class Master {
             socket.setBroadcast(true);
             byte[] bytes = String.valueOf(value).getBytes();
             DatagramPacket packet = new DatagramPacket(bytes, bytes.length,
-                    InetAddress.getByName(BROADCAST_ADDRESS), socket.getLocalPort());
+                    InetAddress.getByName(broadcastAddress), socket.getLocalPort());
             socket.send(packet);
             socket.setBroadcast(false);
         } catch (SocketException e) {

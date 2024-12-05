@@ -60,7 +60,8 @@ public class Master {
     private static <T> void broadcastToLan(UDPManager manager, T value) {
         try {
             manager.setBroadcast(true);
-            manager.setDestPort(manager.getRecvPort());
+            manager.setDestHost(broadcastAddress);
+            manager.setDestPort(manager.getSocket().getLocalPort()); // port master-a
             manager.send(String.valueOf(value));
             manager.setBroadcast(false);
         } catch (SocketException e) {

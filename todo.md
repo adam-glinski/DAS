@@ -1,5 +1,6 @@
 # TODO's
 
+- [ ] Upewnić się że wysyłany numer nie jest liczony lokalnie podwójnie
 - [ ] Upewnić się że wysłany numer doszedł i został odebrany (w przeciwnym wypadku ponowić połączeie)
 - [ ] Dokumentacja ma opisywać nasze podejście (dlaczego tak a nie inaczej)
 - [ ] Broadcast brać poprostu pierwszy (nie loopback, czy virtualny)

@@ -17,8 +17,8 @@ public class DAS {
             return;
         }
 
-        try(DatagramSocket socket = new DatagramSocket(port)) {
-            Master.work(socket, number);
+        try(UDPManager manager = new UDPManager(port)) {
+            Master.work(manager, number);
         } catch(SocketException e) {
             Slave.work(port, number);
         }

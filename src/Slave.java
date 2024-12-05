@@ -9,14 +9,14 @@ public class Slave {
     public static final int MIN_PORT = 0x400;
     public static final int MAX_PORT = 0xFFFF;
 
-    public static void work(int masterPort, int numberToSend) {
+    public static void work(int destPort, int numberToSend) {
         int port = MIN_PORT;
         while (!foundPort) {
-            try (DatagramSocket socket = new DatagramSocket(port)){
+            try (UDPManager manager = new UDPManager(port)) {
                 foundPort = true;
-                byte[] buffer = Integer.toString(numberToSend).getBytes();
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName("localhost"), masterPort);
-                socket.send(packet);
+                manager.setDestHost("localhost");
+                manager.setDestPort(destPort);
+                manager.send(Integer.toString(numberToSend));
             } catch (SocketException e) {
                 System.out.println("Failed to open port " + port + ". Looking for a new one...");
                 port = MIN_PORT + (int)(Math.random() * ((MAX_PORT - MIN_PORT) + 1));

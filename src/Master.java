@@ -14,42 +14,37 @@ public class Master {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
             while (interfaces.hasMoreElements()) {
                 NetworkInterface networkInterface = interfaces.nextElement();
-                if (networkInterface.isLoopback() || !networkInterface.isUp() || networkInterface.isVirtual()) {
-                    continue;
+                if (networkInterface.isLoopback() || !networkInterface.isUp() || networkInterface.isVirtual()) continue;
+                for(InterfaceAddress address : networkInterface.getInterfaceAddresses()) {
+                    InetAddress broadcast = address.getBroadcast();
+                    if(broadcast == null) continue;
+                    broadcastAddress = broadcast.getHostAddress();
+                    System.out.println("Broadcast Address: " + broadcast.getHostAddress());
+                    return;
                 }
-                networkInterface.getInterfaceAddresses().stream()
-                        .filter(interfaceAddress -> interfaceAddress.getBroadcast() != null) // Ensure it has a broadcast address
-                        .forEach(interfaceAddress -> {
-                            InetAddress broadcast = interfaceAddress.getBroadcast();
-                            broadcastAddress = broadcast.getHostAddress();
-                            System.out.println("Broadcast Address: " + broadcast.getHostAddress());
-                        });
             }
         } catch (SocketException e) {
             System.out.println(e.getMessage());
         }
     }
 
-    public static void work(DatagramSocket socket, int startNumber) {
+    public static void work(UDPManager manager, int startNumber) {
         setBroadcastingAddress();
         receivedNums.add(startNumber);
         while(true) {
             try {
-                byte[] buf = new byte[BUFFER_SIZE];
-                DatagramPacket packet = new DatagramPacket(buf, BUFFER_SIZE);
-                socket.receive(packet);
-
-                int recvNum = Integer.parseInt(new String(packet.getData(), 0, packet.getLength()));
+                int recvNum = Integer.parseInt(manager.receive());
+                manager.setDestHost(manager.getRecvHost());
                 switch(recvNum){
                     case 0://TODO: Co w przypadku gdy lista jeste pusta?
                         double average = receivedNums.stream()
                                 .filter(n -> n != 0).mapToInt(Integer::intValue).average().orElse(0.0);
-                        broadcastToLan(socket, (int)average);
+                        broadcastToLan(manager, (int)average);
                         break;
                     case -1:
                         System.out.println(recvNum);
-                        broadcastToLan(socket, recvNum);
-                        socket.close();
+                        broadcastToLan(manager, recvNum);
+                        manager.close();
                         return;
                     default:
                         receivedNums.add(recvNum);
@@ -62,14 +57,12 @@ public class Master {
         }
     }
 
-    private static <T> void broadcastToLan(DatagramSocket socket, T value) {
+    private static <T> void broadcastToLan(UDPManager manager, T value) {
         try {
-            socket.setBroadcast(true);
-            byte[] bytes = String.valueOf(value).getBytes();
-            DatagramPacket packet = new DatagramPacket(bytes, bytes.length,
-                    InetAddress.getByName(broadcastAddress), socket.getLocalPort());
-            socket.send(packet);
-            socket.setBroadcast(false);
+            manager.setBroadcast(true);
+            manager.setDestPort(manager.getRecvPort());
+            manager.send(String.valueOf(value));
+            manager.setBroadcast(false);
         } catch (SocketException e) {
             System.err.println("Failed to set broadcast mode!");
             System.out.println(e.getMessage());

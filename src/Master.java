@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.net.*;
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -52,9 +53,8 @@ public class Master {
                         System.out.println(recvNum);
                         broadcastToLan(manager, recvNum);
                         sentBroadcast = true;
-                        System.out.println("-1");
                         manager.close();
-                        return;
+                        System.exit(0);
                     default:
                         if (!sentBroadcast) {
                             receivedNums.add(recvNum);

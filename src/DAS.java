@@ -7,8 +7,6 @@ public class DAS {
         if(args.length < EXPECTED_NO_ARGS) {
             System.err.println("missing params! usage: java DAS <port> <number>");
             return;
-        } else if (args.length > EXPECTED_NO_ARGS) {
-            System.err.println("WARNING: Program expects 2 arguements, while recived " + args.length + ". Rest will be ommited.");
         }
         int port;
         int number;

@@ -34,7 +34,9 @@ public class Master {
         receivedNums.add(startNumber);
         while(true) {
             try {
-                int recvNum = Integer.parseInt(manager.receive());
+                String recvString = manager.receive();
+                if (recvString.equals("OK")) continue; // Skip any confirmations (master don't need them)
+                int recvNum = Integer.parseInt(recvString);
                 manager.setDestHost(manager.getRecvHost());
                 manager.setDestPort(manager.getRecvPort());
                 if(!sentBroadcast) manager.send("OK"); // Confirm that we got the number, except when we've sent the broadcast
@@ -70,8 +72,6 @@ public class Master {
 
     private static <T> void broadcastToLan(UDPManager manager, T value) {
         try {
-            int maxRetry = 5;
-
             manager.setBroadcast(true);
             manager.setDestHost(broadcastAddress);
             manager.setDestPort(manager.getSocket().getLocalPort()); // port master-a

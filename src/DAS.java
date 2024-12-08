@@ -2,10 +2,13 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 
 public class DAS {
+    public static final int EXPECTED_NO_ARGS = 2;
     public static void main(String[] args) {
-        if(args.length != 2) {
+        if(args.length < EXPECTED_NO_ARGS) {
             System.err.println("missing params! usage: java DAS <port> <number>");
             return;
+        } else if (args.length > EXPECTED_NO_ARGS) {
+            System.err.println("WARNING: Program expects 2 arguements, while recived " + args.length + ". Rest will be ommited.");
         }
         int port;
         int number;

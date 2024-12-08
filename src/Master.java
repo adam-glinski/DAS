@@ -7,6 +7,7 @@ import java.util.List;
 public class Master {
     public static final int BUFFER_SIZE = 10;
     public static String broadcastAddress;
+    public static boolean sentBroadcast = false;
     private static final List<Integer> receivedNums = new ArrayList<>();
 
     static public void setBroadcastingAddress() {
@@ -19,7 +20,7 @@ public class Master {
                     InetAddress broadcast = address.getBroadcast();
                     if(broadcast == null) continue;
                     broadcastAddress = broadcast.getHostAddress();
-                    System.out.println("Broadcast Address: " + broadcast.getHostAddress());
+                    // System.out.println("Broadcast Address: " + broadcast.getHostAddress());
                     return;
                 }
             }
@@ -35,20 +36,30 @@ public class Master {
             try {
                 int recvNum = Integer.parseInt(manager.receive());
                 manager.setDestHost(manager.getRecvHost());
+                manager.setDestPort(manager.getRecvPort());
+                if(!sentBroadcast) manager.send("OK"); // Confirm that we got the number, except when we've sent the broadcast
                 switch(recvNum){
-                    case 0://TODO: Co w przypadku gdy lista jeste pusta?
-                        double average = receivedNums.stream()
-                                .filter(n -> n != 0).mapToInt(Integer::intValue).average().orElse(0.0);
-                        broadcastToLan(manager, (int)average);
+                    case 0:
+                        int average = (int)(receivedNums.stream()
+                                .filter(n -> n != 0).mapToInt(Integer::intValue).average().orElse(0.0));
+                        System.out.println(average);
+                        sentBroadcast = true;
+                        broadcastToLan(manager, average);
                         break;
                     case -1:
                         System.out.println(recvNum);
                         broadcastToLan(manager, recvNum);
+                        sentBroadcast = true;
+                        System.out.println("-1");
                         manager.close();
                         return;
                     default:
-                        receivedNums.add(recvNum);
-                        System.out.println(recvNum);
+                        if (!sentBroadcast) {
+                            receivedNums.add(recvNum);
+                            System.out.println(recvNum);
+                        }
+                        sentBroadcast = false;
+                        manager.setDestPort(manager.getRecvPort());
                         break;
                 }
             } catch (IOException e) {
@@ -59,6 +70,8 @@ public class Master {
 
     private static <T> void broadcastToLan(UDPManager manager, T value) {
         try {
+            int maxRetry = 5;
+
             manager.setBroadcast(true);
             manager.setDestHost(broadcastAddress);
             manager.setDestPort(manager.getSocket().getLocalPort()); // port master-a
